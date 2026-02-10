@@ -7,7 +7,7 @@
             "port": 5432,
             "driver": "PostgreSQL",
             "name": "ecommerce",
-            "database": "postgres",
+            "database": "ecommerce",
             "username": "postgres"
         }
     ]
