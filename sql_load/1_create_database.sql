@@ -1,0 +1,4 @@
+CREATE DATABASE ecommerce;
+
+--DROP DATABASE IF EXISTS ecommerce;
+
