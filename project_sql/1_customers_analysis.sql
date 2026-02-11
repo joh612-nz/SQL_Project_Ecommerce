@@ -63,7 +63,7 @@ LIMIT 20;
 /*
 This query shows the average number of orders per customer by city, focusing on cities with more than 500 unique customers.
 The results are ordered by the average number of orders per customer in descending order, showing the most active cities in terms of customer engagement.
-The ratio of orders per customer is very low, indicating that most customers only make one or two orders, which is common in e-commerce datasets.
+The ratio of orders per customer is very low, close to 1, indicating that most customers only make one or two orders, which is common in e-commerce datasets.
 It can also indicate that many customers are new or that there is a high churn rate, where customers do not return to make additional purchases.
 */
 
