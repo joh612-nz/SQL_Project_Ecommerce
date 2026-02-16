@@ -1,50 +1,61 @@
 /*
+1. Find the monthly sales trends by calculating the total payment_value for each month, ensuring that only 'delivered' orders are included in the analysis.
+    - Use the order_purchase_timestamp from the orders table to group the sales by month.
+    - payment value should be summed up for each month to get the total sales for that month.
+    - Is payment_value increasing over time on a monthly basis?
+    - Check the change in payment_value over time by each city to see if there are any regional trends in sales.
+2. Analyze the preferred payment methods by calculating the average number of installments (payment_installments) used in transactions, and see if there are any trends or patterns in installment usage.
 
-💡 다음 미션: 월별 매출액 구하기
-orders 테이블의 order_purchase_timestamp와 order_payments 테이블의 payment_value를 합쳐서 월별 총 매출액을 구하는 쿼리를 짜보시겠어요?
-
-힌트: 날짜에서 '월'만 추출하려면 DATE_TRUNC('month', order_purchase_timestamp) 함수를 사용하면 편리합니다.
-
-지금 바로 두 번째 파일을 시작해 볼까요? 아니면 첫 번째 파일에서 더 궁금한 점이 있으신가요?
-
-매출 추이: 월별 매출액(payment_value)은 성장하고 있는가?
-Is payment_value increasing over time on a monthly basis?
-Check the change in payment_value over time by each city
-
-결제 수단: 브라질 사람들은 할부(payment_installments)를 얼마나 많이 하는가? (브라질은 할부 문화가 매우 발달해 있습니다.)
-
-가격 vs 배송비: 상품 가격과 배송비(freight_value)의 비율은 어떠한가?
-
-need to check that order status (from orders table) is 'delivered' to ensure that we are analyzing completed transactions, as other statuses like 'canceled' or 'returned' may not reflect actual sales and payments.
+need to check that order status (from orders table) is 'delivered' to ensure that we are analyzing completed transactions, 
+    as other statuses like 'canceled' or 'returned' may not reflect actual sales and payments.
 */
 
 
---need to check if order years are all same or not, if not we need to consider that in our analysis of monthly sales trends.
+-- checking the data from orders table to see if there are multiple years of data, and if so, we need to consider that in our analysis of monthly sales trends.
+-- starts from September 2016 and ends in August 2018, so we have data for multiple years, and we need to consider that in our analysis of monthly sales trends.
 
 SELECT
-    orders.order_id,
+    order_id,
+    order_purchase_timestamp,
+    order_status
+FROM orders
+WHERE order_status = 'delivered'
+ORDER BY order_purchase_timestamp;
+
+-- Find the monthly sales trends by calculating the total payment_value for each month, ensuring that only 'delivered' orders are included in the analysis.
+-- going to only use data from 2017 for this analysis to avoid the partial data from 2016 and 2018, which may skew the results.
+SELECT
     Extract(MONTH FROM orders.order_purchase_timestamp) AS order_month,
-    order_payments.payment_value
+    COUNT(orders.order_id) AS total_orders,
+    SUM(order_payments.payment_value) AS total_payment_value
 FROM orders
 INNER JOIN order_payments ON orders.order_id = order_payments.order_id
 WHERE orders.order_status = 'delivered'
+    AND Extract(YEAR FROM orders.order_purchase_timestamp) = 2017
+GROUP BY order_month
 ORDER BY order_month;
+/*
+This query calculates the total number of orders delivered and the total payment value (sales) for each month of the year 2017.
+The results show that sales tend to increase towards the end of the year, with a significant spike in December, which is likely due to holiday shopping. The lowest sales are observed in February, 
+    which is typically a slow month for retail sales.
+*/
 
--- Need to fix this query
+-- Similar to the previous query, but organized by quarter instead of month to see if there are any seasonal trends in sales.
 WITH quarterly_sales AS (
     SELECT
-        DATE_TRUNC('month', orders.order_purchase_timestamp) AS order_month,
-        SUM(order_payments.payment_value) AS total_sales,
-        CASE (
+        CASE 
             WHEN EXTRACT(MONTH FROM orders.order_purchase_timestamp) IN (1, 2, 3) THEN 'Q1'
             WHEN EXTRACT(MONTH FROM orders.order_purchase_timestamp) IN (4, 5, 6) THEN 'Q2'
             WHEN EXTRACT(MONTH FROM orders.order_purchase_timestamp) IN (7, 8, 9) THEN 'Q3'
             ELSE 'Q4'
-        END AS quarter
-        )
+        END AS quarter,
+        COUNT(orders.order_id) AS total_orders,
+        SUM(order_payments.payment_value) AS total_sales
     FROM orders
     INNER JOIN order_payments ON orders.order_id = order_payments.order_id
     WHERE orders.order_status = 'delivered'
-    GROUP BY order_month
-    ORDER BY order_month
+        AND EXTRACT(YEAR FROM orders.order_purchase_timestamp) = 2017
+    GROUP BY quarter
+    ORDER BY quarter
 )
+
