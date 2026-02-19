@@ -125,7 +125,7 @@ SELECT * FROM monthly_sales ORDER BY city, order_month;
 
 -- Analyze the preferred payment methods and payment installments 
 
--- Checking the distribution of payment types in the transactions made in 2017 (and completed) to see which payment methods are most commonly used by customers for their purchases, which can help us understand customer preferences and behavior when it comes to payment options.
+-- Checking the distribution of payment types in the completed transactions made in 2017 to see which payment methods are most commonly used by customers for their purchases, which can help us understand customer preferences and behavior when it comes to payment options.
 SELECT
     payment_type,
     COUNT(*) AS total_transactions
@@ -136,6 +136,12 @@ WHERE orders.order_status = 'delivered'
     AND Extract(YEAR FROM orders.order_purchase_timestamp) = 2017
 GROUP BY payment_type
 ORDER BY total_transactions DESC;
+/*
+It indicates that the most commonly used payment method for completed transactions in 2017 is credit card, followed by boleto, voucher, and debit card.
+This suggests that customers in this dataset have a strong preference for using credit cards for their purchases,
+which may be due to the convenience and flexibility that credit cards offer compared to other payment methods.
+*/
+
 
 SELECT 
     payment_type,
@@ -148,12 +154,16 @@ GROUP BY payment_type
 ORDER BY avg_installments DESC;
 
 SELECT 
+    payment_type,
     payment_installments,
     COUNT(*) AS total_transactions,
     SUM(payment_value) AS total_payment_value
 FROM order_payments
-GROUP BY payment_installments
-ORDER BY payment_installments;
+INNER JOIN orders ON order_payments.order_id = orders.order_id
+WHERE orders.order_status = 'delivered'
+    AND Extract(YEAR FROM orders.order_purchase_timestamp) = 2017
+GROUP BY payment_type, payment_installments
+ORDER BY payment_type, payment_installments;
 
 SELECT
     *
